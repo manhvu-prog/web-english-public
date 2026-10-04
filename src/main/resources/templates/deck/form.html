@@ -1,0 +1,89 @@
+<!-- Trang tạo hoặc chỉnh sửa Bộ thẻ (Deck Form) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${deck != null} ? 'Sửa Deck' : 'Tạo Deck Mới'">Deck Form | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .form-input-main {
+            @apply w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all outline-none text-base text-gray-900;
+            border-width: 1px;
+        }
+
+        .btn-primary {
+            @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98] text-lg;
+        }
+
+        .btn-secondary {
+            @apply bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 px-8 rounded-2xl transition-all active:scale-[0.98] text-lg text-center;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="flex-grow flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-[550px]">
+
+            <div
+                class="bg-white p-10 md:p-14 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.04)] border border-gray-50">
+
+                <header class="text-center mb-12">
+                    <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight mb-3"
+                        th:text="${deck != null} ? 'Sửa bộ thẻ' : 'Tạo bộ thẻ mới'">Deck Form</h1>
+                    <p class="text-gray-400 text-sm italic"
+                        th:text="${deck != null} ? 'Cập nhật lại tên và mô tả cho bộ thẻ này.' : 'Đặt tên và mô tả để bắt đầu xây dựng bộ thẻ của bạn.'">
+                        Deck Description
+                    </p>
+                </header>
+
+                <form th:action="${deck != null} ? @{/decks/{id}/edit(id=${deck.deckId})} : @{/decks}"
+                    th:object="${deckForm}" method="post" class="flex flex-col gap-8">
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-black text-gray-700 ml-1 uppercase tracking-[0.2em]">Tiêu đề bộ thẻ
+                            *</label>
+                        <input type="text" th:field="*{title}" placeholder="Ví dụ: Tiếng Anh chuyên ngành"
+                            class="form-input-main" />
+                        <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}"
+                            class="text-xs text-red-500 font-bold mt-1 ml-1"></p>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-black text-gray-700 ml-1 uppercase tracking-[0.2em]">Mô tả
+                            ngắn</label>
+                        <textarea th:field="*{description}" rows="4"
+                            placeholder="Bộ thẻ này dùng để làm gì? (Không bắt buộc)"
+                            class="form-input-main py-4 resize-none"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+                        <button type="submit" class="btn-primary order-1 md:order-2"
+                            th:text="${deck != null} ? 'Lưu thay đổi' : 'Tạo bộ thẻ'"></button>
+
+                        <a th:href="${deck != null} ? @{/decks/{id}(id=${deck.deckId})} : @{/}"
+                            class="btn-secondary order-2 md:order-1 flex items-center justify-center">
+                            Hủy bỏ
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+
+
+        </div>
+    </main>
+
+</body>
+
+</html>

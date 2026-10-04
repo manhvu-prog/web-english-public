@@ -1,0 +1,215 @@
+<!-- Trang Đăng ký VIP: Giới thiệu quyền lợi và nút nâng cấp tài khoản -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nâng cấp VIP | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        .vip-gradient {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a0533 40%, #0f1040 100%);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gold-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%);
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.4), 0 0 80px rgba(251, 191, 36, 0.15);
+            transition: all 0.3s ease;
+        }
+        .gold-btn:hover {
+            box-shadow: 0 0 60px rgba(251, 191, 36, 0.6), 0 0 100px rgba(251, 191, 36, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .crown-glow {
+            filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.8));
+            animation: pulse-crown 2s ease-in-out infinite;
+        }
+        @keyframes pulse-crown {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.8)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 35px rgba(251, 191, 36, 1)); transform: scale(1.05); }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.2), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .star-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-radius: 9999px;
+            padding: 2px 12px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #1a0533;
+            letter-spacing: 0.08em;
+        }
+
+        .already-vip-card {
+            background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(217,119,6,0.1));
+            border: 2px solid rgba(251, 191, 36, 0.4);
+        }
+    </style>
+</head>
+
+<body class="vip-gradient min-h-screen text-white">
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-5xl mx-auto px-4 py-16">
+
+        <!-- Flash messages -->
+        <div th:if="${success}"
+            class="mb-8 p-4 bg-yellow-400/20 border border-yellow-400/40 text-yellow-300 rounded-2xl text-center font-bold backdrop-blur"
+            th:text="${success}"></div>
+        <div th:if="${info}"
+            class="mb-8 p-4 bg-blue-400/20 border border-blue-400/40 text-blue-300 rounded-2xl text-center font-bold backdrop-blur"
+            th:text="${info}"></div>
+        <div th:if="${error}"
+            class="mb-8 p-4 bg-red-400/20 border border-red-400/40 text-red-300 rounded-2xl text-center font-bold backdrop-blur"
+            th:text="${error}"></div>
+
+        <!-- Nếu đã là VIP -->
+        <div th:if="${isVip}" class="already-vip-card rounded-3xl p-10 mb-12 text-center">
+            <div class="text-6xl mb-4 crown-glow inline-block">👑</div>
+            <h1 class="text-3xl font-black mb-3">
+                <span class="gold-gradient">Bạn đang là thành viên VIP!</span>
+            </h1>
+            <p class="text-yellow-300/80 text-lg mb-2">Tận hưởng toàn bộ quyền lợi VIP của AnkarD.</p>
+            <p th:if="${vipExpiresAt}" class="text-sm text-yellow-400/60 font-medium">
+                🗓️ Hạn VIP: <span th:text="${#temporals.format(vipExpiresAt, 'dd/MM/yyyy')}" class="font-bold text-yellow-400"></span>
+            </p>
+            <div class="mt-8 flex gap-4 justify-center flex-wrap">
+                <a href="/public-decks"
+                    class="gold-btn text-gray-900 font-black py-3 px-8 rounded-2xl text-sm uppercase tracking-widest">
+                    Khám phá Deck VIP
+                </a>
+                <a href="/"
+                    class="border border-yellow-400/30 text-yellow-300 font-bold py-3 px-8 rounded-2xl text-sm uppercase tracking-widest hover:bg-yellow-400/10 transition">
+                    Về trang chủ
+                </a>
+            </div>
+        </div>
+
+        <!-- Hero Section (chưa phải VIP) -->
+        <div th:unless="${isVip}">
+            <div class="text-center mb-16">
+                <div class="text-8xl mb-6 crown-glow inline-block">👑</div>
+                <div class="star-badge inline-block mb-4">PREMIUM MEMBERSHIP</div>
+                <h1 class="text-5xl md:text-6xl font-black mb-6 leading-tight">
+                    Nâng cấp lên<br/>
+                    <span class="gold-gradient">AnkarD VIP</span>
+                </h1>
+                <p class="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                    Mở khóa toàn bộ thư viện deck cao cấp, được tuyển chọn bởi đội ngũ chuyên gia ngôn ngữ.
+                </p>
+            </div>
+
+            <!-- Giới thiệu các tính năng độc quyền cho thành viên VIP -->
+            <!-- Feature Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                <div class="feature-card rounded-3xl p-8 text-center">
+                    <div class="text-4xl mb-4">🏆</div>
+                    <h3 class="text-lg font-black mb-2 text-yellow-300">Deck độc quyền VIP</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Truy cập hàng trăm bộ thẻ cao cấp được thiết kế bởi chuyên gia, không có sẵn cho tài khoản thường.</p>
+                </div>
+                <div class="feature-card rounded-3xl p-8 text-center">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-lg font-black mb-2 text-yellow-300">Trải nghiệm ưu tiên</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Nội dung được cập nhật liên tục, ưu tiên học các chủ đề thịnh hành và hot nhất.</p>
+                </div>
+                <div class="feature-card rounded-3xl p-8 text-center">
+                    <div class="text-4xl mb-4">🌟</div>
+                    <h3 class="text-lg font-black mb-2 text-yellow-300">Badge VIP nổi bật</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Hiển thị huy hiệu 👑 VIP trên hồ sơ, thể hiện đẳng cấp trong cộng đồng AnkarD.</p>
+                </div>
+            </div>
+
+            <!-- Thẻ thông tin gói VIP và nút đăng ký -->
+            <!-- Pricing Card -->
+            <div class="max-w-md mx-auto mb-12">
+                <div class="feature-card rounded-[2rem] p-10 text-center relative overflow-hidden">
+                    <!-- Shimmer overlay -->
+                    <div class="absolute inset-0 shimmer pointer-events-none"></div>
+
+                    <div class="relative">
+                        <div class="star-badge inline-block mb-4">🎁 ƯU ĐÃI ĐẶC BIỆT</div>
+                        <div class="text-6xl font-black text-white mb-1">MIỄN PHÍ</div>
+                        <div class="text-yellow-400/70 text-sm font-medium mb-6">Thời hạn 30 ngày • Không cần thẻ tín dụng</div>
+
+                        <div class="space-y-3 mb-8 text-left">
+                            <div class="flex items-center gap-3 text-sm text-gray-300">
+                                <span class="text-yellow-400 font-black">✓</span> Truy cập tất cả Deck VIP
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-gray-300">
+                                <span class="text-yellow-400 font-black">✓</span> Import deck VIP về tài khoản
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-gray-300">
+                                <span class="text-yellow-400 font-black">✓</span> Huy hiệu 👑 VIP trên hồ sơ
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-gray-300">
+                                <span class="text-yellow-400 font-black">✓</span> Nội dung cập nhật liên tục
+                            </div>
+                        </div>
+
+                        <!-- Login check -->
+                        <div th:if="${username == null}" class="space-y-3">
+                            <p class="text-yellow-400/80 text-sm font-medium">Bạn cần đăng nhập để đăng ký VIP</p>
+                            <a th:href="@{/login}"
+                                class="gold-btn block w-full text-gray-900 font-black py-4 px-8 rounded-2xl text-sm uppercase tracking-widest text-center">
+                                Đăng nhập để tiếp tục
+                            </a>
+                        </div>
+
+                        <div th:unless="${username == null}">
+                            <form th:action="@{/vip/upgrade}" method="post">
+                                <button type="submit" id="btn-upgrade-vip"
+                                    class="gold-btn w-full text-gray-900 font-black py-4 px-8 rounded-2xl text-base uppercase tracking-widest">
+                                    👑 Đăng ký VIP ngay — Miễn phí
+                                </button>
+                            </form>
+                            <p class="text-gray-500 text-xs mt-3">Đăng ký với tài khoản: <span class="text-yellow-400 font-bold" th:text="${username}"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back link -->
+            <div class="text-center">
+                <a href="/public-decks" class="text-gray-500 hover:text-gray-300 text-sm transition underline underline-offset-4">
+                    ← Quay lại khám phá thư viện
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

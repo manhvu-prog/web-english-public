@@ -1,0 +1,361 @@
+<!-- Trang Chi tiết Bộ thẻ Cộng đồng: Cho phép xem nội dung và Import -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${deck.title} + ' - Deck được chia sẻ'">Chi tiết Deck Chia Sẻ | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+
+        /* Star rating input */
+        .star-group { display: flex; flex-direction: row-reverse; gap: 4px; }
+        .star-group input { display: none; }
+        .star-group label {
+            font-size: 28px; cursor: pointer; color: #d1d5db;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .star-group input:checked ~ label,
+        .star-group label:hover,
+        .star-group label:hover ~ label {
+            color: #f59e0b;
+            transform: scale(1.15);
+        }
+
+        /* Display stars */
+        .stars-display { display: inline-flex; gap: 2px; }
+        .star-filled { color: #f59e0b; }
+        .star-empty  { color: #e5e7eb; }
+
+        /* Progress bar for star distribution */
+        .dist-bar {
+            background: #f1f5f9; border-radius: 9999px; overflow: hidden;
+            height: 6px; flex: 1;
+        }
+        .dist-bar-fill { height: 100%; background: #f59e0b; border-radius: 9999px; transition: width 0.5s ease; }
+    </style>
+</head>
+<span id="__isLoggedIn" th:attr="data-logged=${username != null}" style="display:none"></span>
+
+<body class="min-h-screen flex flex-col">
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-5xl mx-auto w-full px-4 py-12 space-y-10">
+
+        <!-- Flash messages -->
+        <div th:if="${success}"
+            class="p-5 bg-green-50 text-green-700 rounded-[2rem] border border-green-100 text-center font-bold shadow-sm"
+            th:text="${success}"></div>
+        <div th:if="${error}"
+            class="p-5 bg-red-50 text-red-700 rounded-[2rem] border border-red-100 text-center font-bold shadow-sm"
+            th:text="${error}"></div>
+        <div th:if="${info}"
+            class="p-5 bg-blue-50 text-blue-700 rounded-[2rem] border border-blue-100 text-center font-bold shadow-sm"
+            th:text="${info}"></div>
+
+        <!-- ===== HERO SECTION ===== -->
+        <!-- Phần thông tin tổng quan của bộ thẻ công khai -->
+        <section
+            class="bg-white p-8 md:p-14 rounded-[3rem] shadow-[0_30px_80px_rgba(0,0,0,0.03)] border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-10">
+            <div class="flex-grow space-y-5 text-center md:text-left">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest">
+                    🌏 Deck Công Khai
+                </div>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight" th:text="${deck.title}">Tên
+                    Deck</h1>
+                <p class="text-gray-400 text-xl italic font-medium max-w-2xl"
+                    th:text="${deck.description != null ? deck.description : 'Không có mô tả cho bộ thẻ này.'}">Mô tả
+                </p>
+
+                <div class="flex flex-wrap justify-center md:justify-start gap-8 pt-4">
+                    <div class="flex flex-col">
+                        <span class="text-3xl font-black text-gray-900" th:text="${#lists.size(flashcards)}">0</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Flashcards</span>
+                    </div>
+                    <div class="w-[1px] bg-gray-100 hidden md:block"></div>
+                    <!-- Rating summary inline -->
+                    <div class="flex flex-col" th:if="${totalRatings > 0}">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-2xl font-black text-gray-900" th:text="${avgStars}">0</span>
+                            <span class="text-yellow-400 text-xl">★</span>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                            th:text="${totalRatings} + ' đánh giá'">0 đánh giá</span>
+                    </div>
+                    <div class="w-[1px] bg-gray-100 hidden md:block"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Người
+                            đăng</span>
+                        <span class="text-sm font-bold text-gray-700"
+                            th:text="${deck.createdBy != null ? deck.createdBy.username : 'Ẩn danh'}">Admin</span>
+                    </div>
+                    <!-- Lượt xem -->
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Lượt xem</span>
+                        <span class="text-sm font-bold text-orange-500" th:text="${deck.viewCount} + ' 🔥'">0 🔥</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-auto min-w-[280px]">
+                <form th:action="@{/public-decks/{id}/import(id=${deck.deckId})}" method="post"
+                    onsubmit="return confirm('Import deck này về tài khoản của bạn?');">
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 px-8 rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-[0.96] text-lg uppercase tracking-wider">
+                        Import Bộ Thẻ
+                    </button>
+                </form>
+                <p class="text-[11px] text-gray-400 text-center mt-4 italic font-medium px-4 leading-relaxed">
+                    * Sau khi import, bộ thẻ sẽ trở thành bản sao cá nhân của bạn.
+                </p>
+            </div>
+        </section>
+
+        <!-- ===== FLASHCARD LIST ===== -->
+        <section class="bg-white rounded-[3rem] shadow-sm border border-gray-50 overflow-hidden">
+            <div class="p-10 border-b border-gray-50 bg-gray-50/30 flex justify-between items-center">
+                <h3 class="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-indigo-600 rounded-full"></span>
+                    Nội dung bộ thẻ
+                </h3>
+            </div>
+            <!-- Hiển thị danh sách các thẻ có trong deck -->
+
+            <div th:if="${#lists.isEmpty(flashcards)}" class="py-32 text-center text-gray-300 italic">
+                Bộ thẻ này hiện chưa có nội dung.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(flashcards)}" class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50/80">
+                            <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest w-20 text-center">#</th>
+                            <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Mặt trước</th>
+                            <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Mặt sau / Ví dụ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <tr th:each="card, iterStat : ${flashcards}" class="hover:bg-indigo-50/30 transition-all group">
+                            <td class="px-8 py-6 text-sm font-black text-gray-200 group-hover:text-indigo-200 text-center"
+                                th:text="${iterStat.index + 1}">1</td>
+                            <td class="px-8 py-6">
+                                <div class="font-bold text-gray-900 text-lg" th:text="${card.frontContent}">Front</div>
+                                <div class="text-xs text-blue-500 font-bold mt-1 tracking-wide uppercase italic"
+                                    th:text="${card.pronunciation}">/pronun/</div>
+                            </td>
+                            <td class="px-8 py-6">
+                                <div class="text-base text-gray-700 font-semibold" th:text="${card.backContent}">Back</div>
+                                <div class="text-xs text-gray-400 italic mt-2 leading-relaxed max-w-xl"
+                                    th:text="${card.exampleSentence}">Example sentence...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== RATING SECTION ===== -->
+        <section id="reviews" class="space-y-8">
+
+            <!-- Header + Summary -->
+            <div class="bg-white rounded-[2.5rem] p-8 md:p-10 border border-gray-100 shadow-sm">
+                <h2 class="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-yellow-400 rounded-full"></span>
+                    Đánh giá từ cộng đồng
+                    <span class="text-sm font-medium text-gray-400 ml-1"
+                        th:if="${totalRatings > 0}" th:text="'(' + ${totalRatings} + ')'"></span>
+                </h2>
+                <!-- Phần tổng hợp và gửi đánh giá (Rating & Stars) -->
+
+                <!-- Summary: avg + phân bố sao -->
+                <div th:if="${totalRatings > 0}" class="flex flex-col md:flex-row items-center gap-10 mb-10">
+                    <!-- Avg score -->
+                    <div class="text-center shrink-0">
+                        <div class="text-7xl font-black text-gray-900 leading-none" th:text="${avgStars}">4.5</div>
+                        <div class="flex justify-center gap-0.5 mt-2 text-2xl">
+                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                <span th:text="${i <= avgStars} ? '★' : (${i - 0.5 <= avgStars} ? '★' : '☆')"
+                                    th:class="${i <= avgStars} ? 'star-filled' : (${i - 0.5 <= avgStars} ? 'star-filled opacity-60' : 'star-empty')">★</span>
+                            </th:block>
+                        </div>
+                        <div class="text-sm text-gray-400 mt-1 font-medium" th:text="${totalRatings} + ' đánh giá'"></div>
+                    </div>
+
+                    <!-- Phân bố -->
+                    <div class="flex-1 w-full space-y-2">
+                        <div th:each="entry : ${starDist}" class="flex items-center gap-3">
+                            <span class="text-xs font-black text-gray-500 w-6 text-right shrink-0"
+                                th:text="${entry.key}">5</span>
+                            <span class="text-yellow-400 text-xs shrink-0">★</span>
+                            <div class="dist-bar">
+                                <div class="dist-bar-fill"
+                                    th:style="'width:' + (${totalRatings} > 0 ? (${entry.value} * 100 / ${totalRatings}) : 0) + '%'"></div>
+                            </div>
+                            <span class="text-xs text-gray-400 font-medium w-6 shrink-0"
+                                th:text="${entry.value}">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form đánh giá / chỉnh sửa -->
+                <div th:if="${username != null}">
+                    <div class="border-t border-gray-50 pt-8">
+                        <h3 class="text-base font-black text-gray-700 mb-5"
+                            th:text="${myRating != null} ? '✏️ Chỉnh sửa đánh giá của bạn' : '⭐ Viết đánh giá'">Đánh giá</h3>
+                        <form th:action="@{/public-decks/{id}/rate(id=${deck.deckId})}" method="post"
+                              id="rating-form" class="space-y-5">
+
+                            <!-- Star picker -->
+                            <div>
+                                <label class="text-sm font-bold text-gray-600 block mb-2">Số sao *</label>
+                                <div class="star-group" id="star-picker">
+                                    <th:block th:each="i : ${#numbers.sequence(5, 1, -1)}">
+                                        <input type="radio" name="stars" th:id="'star-' + ${i}" th:value="${i}"
+                                            th:checked="${myRating != null and myRating.stars == i}" required />
+                                        <label th:for="'star-' + ${i}" title="${i + ' sao'}" class="select-none">★</label>
+                                    </th:block>
+                                </div>
+                            </div>
+
+                            <!-- Comment -->
+                            <div>
+                                <label class="text-sm font-bold text-gray-600 block mb-2">Nhận xét (tùy chọn)</label>
+                                <textarea name="comment" rows="3" maxlength="500"
+                                    placeholder="Chia sẻ cảm nhận của bạn về bộ thẻ này..."
+                                    th:text="${myRating != null ? myRating.comment : ''}"
+                                    class="w-full px-5 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-700 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 outline-none resize-none transition"></textarea>
+                                <p class="text-xs text-gray-400 mt-1">Tối đa 500 ký tự</p>
+                            </div>
+
+                            <button type="submit" id="btn-submit-rating"
+                                class="px-8 py-3 font-black text-sm rounded-2xl text-white transition-all uppercase tracking-widest shadow"
+                                style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                                <span th:text="${myRating != null} ? '💾 Cập nhật đánh giá' : '⭐ Gửi đánh giá'">Gửi</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div th:unless="${username != null}"
+                    class="border-t border-gray-50 pt-8 text-center py-6">
+                    <p class="text-gray-400 text-sm">
+                        <a href="/login" class="text-yellow-500 font-black hover:underline">Đăng nhập</a>
+                        để viết đánh giá cho bộ thẻ này.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Danh sách đánh giá -->
+            <div th:if="${!#lists.isEmpty(ratings)}" class="space-y-4">
+                <div th:each="r : ${ratings}"
+                     class="bg-white rounded-[2rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between gap-4">
+                        <!-- Avatar + tên -->
+                        <div class="flex items-center gap-4 flex-1 min-w-0">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-black text-sm shrink-0"
+                                 th:text="${#strings.toUpperCase(#strings.substring(r.user.username, 0, 1))}">U</div>
+                            <div class="min-w-0">
+                                <div class="font-black text-gray-900 text-sm" th:text="${r.user.username}">User</div>
+                                <div class="text-xs text-gray-400 mt-0.5"
+                                    th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2024</div>
+                            </div>
+                        </div>
+
+                        <!-- Stars + actions -->
+                        <div class="flex items-start gap-3 shrink-0">
+                            <!-- Sao hiển thị -->
+                            <div class="flex gap-0.5">
+                                <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                    <span th:class="${i <= r.stars} ? 'star-filled' : 'star-empty'"
+                                        class="text-lg select-none">★</span>
+                                </th:block>
+                            </div>
+                            <!-- Nút xóa (chủ sở hữu hoặc admin) -->
+                            <form th:if="${username != null and (r.user.username == username or (role != null and (role.toLowerCase() == 'admin' or role.toLowerCase() == 'super_admin')))}"
+                                  th:action="@{/public-decks/{id}/delete-rating(id=${deck.deckId})}" method="post"
+                                  onsubmit="return confirm('Xóa đánh giá này?');">
+                                <input type="hidden" name="ratingId" th:value="${r.ratingId}" />
+                                <button type="submit"
+                                    class="text-gray-300 hover:text-red-500 transition text-sm font-bold p-1 leading-none"
+                                    title="Xóa đánh giá">✕</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Comment -->
+                    <p th:if="${r.comment != null and !r.comment.isEmpty()}"
+                        class="mt-4 text-gray-600 text-sm leading-relaxed bg-gray-50 rounded-xl px-4 py-3 italic"
+                        th:text="${r.comment}"></p>
+                </div>
+            </div>
+
+            <!-- Empty state (không có rating nào) -->
+            <div th:if="${#lists.isEmpty(ratings)}"
+                class="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                <div class="text-5xl mb-3">💬</div>
+                <p class="text-gray-400 font-medium">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal đăng nhập -->
+    <div id="loginRequiredModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:2rem; padding:2.5rem 2rem; max-width:360px; width:90%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.15); animation:modalIn 0.25s ease;">
+            <div style="font-size:2.5rem; margin-bottom:1rem;">🔒</div>
+            <h2 style="font-size:1.25rem; font-weight:800; color:#1e293b; margin-bottom:0.5rem;">Yêu cầu đăng nhập</h2>
+            <p style="color:#64748b; font-size:0.9rem; margin-bottom:1.75rem;">Vui lòng đăng nhập để tiếp tục thực hiện thao tác này.</p>
+            <div style="display:flex; gap:0.75rem; justify-content:center;">
+                <button onclick="closeLoginModal()" style="padding:0.65rem 1.5rem; border-radius:9999px; border:1.5px solid #e2e8f0; font-weight:700; font-size:0.85rem; color:#64748b; cursor:pointer; background:white; transition:all 0.2s;">Hủy</button>
+                <button onclick="goToLogin()" style="padding:0.65rem 1.75rem; border-radius:9999px; background:#2563eb; color:white; font-weight:800; font-size:0.85rem; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); transition:all 0.2s;">Đăng nhập ngay</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
+    </style>
+
+    <script>
+        (function () {
+            var isLoggedIn = document.getElementById('__isLoggedIn').dataset.logged === 'true';
+            var pendingUrl = null;
+
+            function showLoginModal(redirectUrl) {
+                if (isLoggedIn) return false;
+                pendingUrl = redirectUrl || window.location.pathname;
+                document.getElementById('loginRequiredModal').style.display = 'flex';
+                return true;
+            }
+
+            window.closeLoginModal = function () {
+                document.getElementById('loginRequiredModal').style.display = 'none';
+                pendingUrl = null;
+            };
+
+            window.goToLogin = function () {
+                window.location.href = '/login?redirect=' + encodeURIComponent(pendingUrl || window.location.pathname);
+            };
+
+            // Đóng modal khi click nền
+            document.getElementById('loginRequiredModal').addEventListener('click', function (e) {
+                if (e.target === this) closeLoginModal();
+            });
+
+            if (!isLoggedIn) {
+                // Intercept form Import Bộ Thẻ
+                document.querySelectorAll('form[action*="/import"]').forEach(function (form) {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        showLoginModal(window.location.pathname);
+                    });
+                });
+            }
+        })();
+    </script>
+
+</body>
+</html>

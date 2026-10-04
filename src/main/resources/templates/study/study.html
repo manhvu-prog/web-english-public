@@ -1,0 +1,122 @@
+<!-- Trang Học Flashcard: Hiển thị thẻ và các nút đánh giá (Again, Hard, Good, Easy) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="'Học: ' + ${studySession.deckTitle}">Học Flashcard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased">
+
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center py-12 px-4 w-full">
+        
+        <!-- Tiêu đề & Tiến độ -->
+        <div class="flex justify-between items-end mb-6 w-full max-w-2xl">
+            <div>
+                <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Đang học bộ thẻ</span>
+                <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight" th:text="${studySession.deckTitle}">Tên Deck</h2>
+            </div>
+            <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                <span class="text-sm font-bold text-gray-600" th:text="${studySession.remainingCards} + ' thẻ còn lại'">0 thẻ còn lại</span>
+            </div>
+        </div>
+
+        <!-- Khu vực hiển thị Thẻ Flashcard chính -->
+        <div class="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 p-10 md:p-14 text-center min-h-[350px] flex flex-col justify-center transition-all duration-500 relative overflow-hidden group">
+            
+            <!-- Phát âm (nếu có) - hiện ở trên cùng thẻ -->
+            <div th:if="${showAnswer and studySession.pronunciation != null}" class="absolute top-6 left-1/2 -translate-x-1/2">
+                <span class="px-4 py-1.5 bg-gray-50 text-gray-500 text-sm font-bold rounded-full tracking-widest" th:text="${studySession.pronunciation}"></span>
+            </div>
+
+            <!-- Mặt trước -->
+            <div class="flashcard-front z-10 transition-transform duration-500 group-hover:scale-[1.02]">
+                <p class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight" th:text="${studySession.frontContent}">Front content</p>
+            </div>
+
+            <!-- Mặt sau (chỉ hiện khi showAnswer = true) -->
+            <div th:if="${showAnswer}" class="flashcard-back mt-10 pt-10 border-t-2 border-dashed border-gray-100 z-10">
+                
+                <p class="text-2xl md:text-3xl font-extrabold text-blue-600 mb-6">
+                    <strong th:text="${studySession.backContent}">Back content</strong>
+                </p>
+
+                <!-- Câu ví dụ -->
+                <div th:if="${studySession.exampleSentence != null}" class="bg-gray-50 rounded-2xl p-6 mb-8 inline-block max-w-lg">
+                    <p class="text-gray-600 italic text-lg leading-relaxed"><em th:text="${studySession.exampleSentence}">Example sentence</em></p>
+                </div>
+
+                <!-- Ảnh -->
+                <div th:if="${!#strings.isEmpty(studySession.imageUrl)}" class="mt-4 mb-8">
+                    <img th:src="${studySession.imageUrl}" alt="Ảnh minh họa" class="mx-auto rounded-3xl shadow-md max-h-[220px] object-cover ring-4 ring-gray-50" />
+                </div>
+
+                <!-- Âm thanh -->
+                <div th:if="${!#strings.isEmpty(studySession.audioUrl)}" class="mt-6 flex justify-center">
+                    <audio controls class="h-12 shadow-sm rounded-full">
+                        <source th:src="${studySession.audioUrl}" />
+                        Trình duyệt không hỗ trợ audio.
+                    </audio>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===================== NÚT HÀNH ĐỘNG ===================== -->
+
+        <!-- Chưa lật thẻ: nút "Hiển thị đáp án" -->
+        <div th:unless="${showAnswer}" class="mt-12 w-full max-w-2xl flex justify-center">
+            <form th:action="@{/study/{id}/show-answer(id=${studySession.deckId})}" method="post" class="w-full max-w-sm">
+                <input type="hidden" name="flashcardId" th:value="${studySession.flashcardId}" />
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-lg py-4 px-8 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-[0.98] uppercase tracking-widest">
+                    Hiển thị đáp án
+                </button>
+            </form>
+        </div>
+
+        <!-- Đã lật thẻ: 4 nút đánh giá -->
+        <div th:if="${showAnswer}" class="mt-10 w-full max-w-2xl">
+            <form th:action="@{/study/{id}/review(id=${studySession.deckId})}" method="post" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <input type="hidden" name="flashcardId" th:value="${studySession.flashcardId}" />
+
+                <!-- Again -->
+                <button type="submit" name="result" value="again" class="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-red-100 bg-white hover:bg-red-50 text-red-500 transition-all active:scale-[0.96] group">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-400 mb-2 transition-colors" th:text="${labels[0]}">&lt; 1m</span>
+                    <span class="font-extrabold text-lg tracking-wide">Lại (Again)</span>
+                </button>
+
+                <!-- Hard -->
+                <button type="submit" name="result" value="hard" class="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-amber-100 bg-white hover:bg-amber-50 text-amber-500 transition-all active:scale-[0.96] group">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-amber-400 mb-2 transition-colors" th:text="${labels[1]}">Hard</span>
+                    <span class="font-extrabold text-lg tracking-wide">Khó (Hard)</span>
+                </button>
+
+                <!-- Good -->
+                <button type="submit" name="result" value="good" class="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-blue-100 bg-white hover:bg-blue-50 text-blue-600 transition-all active:scale-[0.96] group shadow-[0_10px_20px_rgba(59,130,246,0.1)]">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 mb-2 transition-colors" th:text="${labels[2]}">Good</span>
+                    <span class="font-extrabold text-lg tracking-wide">Tốt (Good)</span>
+                </button>
+
+                <!-- Easy -->
+                <button type="submit" name="result" value="easy" class="flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-emerald-100 bg-white hover:bg-emerald-50 text-emerald-500 transition-all active:scale-[0.96] group">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-400 mb-2 transition-colors" th:text="${labels[3]}">Easy</span>
+                    <span class="font-extrabold text-lg tracking-wide">Dễ (Easy)</span>
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+</body>
+</html>

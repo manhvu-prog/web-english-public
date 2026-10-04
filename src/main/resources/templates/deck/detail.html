@@ -1,0 +1,362 @@
+<!-- Trang Chi tiết Bộ thẻ: Liệt kê các thẻ, thêm thẻ mới và quản lý chia sẻ -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${deck.title} + ' - Chi tiết'">Chi tiết Deck | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Style cho các ô nhập liệu chính */
+        .form-input-main {
+            @apply w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all outline-none text-base text-gray-900;
+            border-width: 1px;
+        }
+
+        /* Style cho các ô nhập liệu phụ (URL) */
+        .form-input-sub {
+            @apply w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 focus:border-blue-400 focus:bg-white outline-none text-xs text-gray-600;
+            border-width: 1px;
+        }
+
+        .btn-action {
+            @apply flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all active:scale-[0.96] text-sm shadow-sm;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-10 space-y-10">
+
+        <div th:if="${success}"
+            class="p-5 bg-green-50 text-green-700 rounded-[2rem] border border-green-100 text-center font-bold shadow-sm animate-pulse"
+            th:text="${success}"></div>
+        <div th:if="${error}"
+            class="p-5 bg-red-50 text-red-700 rounded-[2rem] border border-red-100 text-center font-bold shadow-sm"
+            th:text="${error}"></div>
+
+        <!-- Phần hiển thị thông tin chính của bộ thẻ (Title, Description, Status) -->
+        <section
+            class="bg-white p-8 md:p-12 rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-gray-50 flex flex-col lg:flex-row justify-between items-center gap-10">
+            <div class="flex-grow space-y-5 text-center lg:text-left">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Status: <span th:text="${deck.status}">PRIVATE</span>
+                </div>
+                <h1 class="text-5xl font-extrabold text-gray-900 tracking-tight leading-tight" th:text="${deck.title}">
+                    Tên Bộ Thẻ</h1>
+                <p class="text-gray-400 text-xl italic font-medium max-w-2xl" th:text="${deck.description}">Mô tả ngắn
+                    gọn về bộ thẻ của bạn.</p>
+
+                <div class="flex flex-wrap justify-center lg:justify-start gap-10 pt-4">
+                    <div>
+                        <span class="block text-3xl font-black text-gray-900"
+                            th:text="${#lists.size(flashcards)}">0</span>
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thẻ hiện có</span>
+                    </div>
+                    <div class="w-[1px] bg-gray-100 hidden lg:block"></div>
+                    <div class="flex items-center gap-2">
+                        <div th:if="${deck.status.name() == 'APPROVED'}"
+                            class="flex items-center text-green-500 font-bold gap-1">
+                            <span class="text-xl">✓</span> <span>PUBLIC</span>
+                        </div>
+                        <div th:if="${deck.status.name() == 'PENDING'}"
+                            class="flex items-center text-orange-500 font-bold gap-1 italic">
+                            <span class="text-xl">⏳</span> <span>ĐANG CHỜ DUYỆT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4 w-full lg:w-72">
+                <a th:href="@{/study/{id}(id=${deck.deckId})}" class="w-full">
+                    <button th:disabled="${#lists.isEmpty(flashcards)}"
+                        class="btn-action w-full bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-100 disabled:bg-gray-200 disabled:shadow-none py-5 text-lg">
+                        ▶ BẮT ĐẦU HỌC
+                    </button>
+                </a>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <a th:href="@{/decks/{id}/edit(id=${deck.deckId})}" th:if="${deck.status.name() != 'PENDING'}"
+                        class="w-full">
+                        <button
+                            class="btn-action w-full bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 italic">✏
+                            Sửa</button>
+                    </a>
+                    <button th:if="${deck.status.name() == 'PENDING'}" disabled
+                        class="btn-action w-full bg-gray-50 text-gray-300 border border-gray-100 italic">✏ Sửa</button>
+
+                    <form th:action="@{/decks/{id}/delete(id=${deck.deckId})}" method="post"
+                        onsubmit="return confirm('Xóa bộ thẻ này?')">
+                        <button type="submit" th:disabled="${deck.status.name() == 'PENDING'}"
+                            class="btn-action w-full bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 disabled:opacity-30 italic">🗑
+                            Xóa</button>
+                    </form>
+                </div>
+
+                <form th:if="${deck.status.name() == 'PRIVATE' or deck.status.name() == 'REJECTED'}"
+                    th:action="@{/decks/{id}/submit-share(id=${deck.deckId})}" method="post">
+                    <button type="submit"
+                        class="btn-action w-full bg-gray-900 text-white hover:bg-black shadow-lg italic">
+                        📤 Gửi duyệt chia sẻ
+                    </button>
+                </form>
+
+                <form th:if="${deck.status.name() == 'PENDING'}"
+                    th:action="@{/decks/{id}/cancel-share-review(id=${deck.deckId})}" method="post"
+                    onsubmit="return confirm('Hủy yêu cầu duyệt chia sẻ deck này?')">
+                    <button type="submit"
+                        class="btn-action w-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 shadow-sm italic">
+                        ↩ Hủy yêu cầu duyệt
+                    </button>
+                </form>
+
+                <form th:if="${deck.status.name() == 'APPROVED'}"
+                    th:action="@{/decks/{id}/stop-share(id=${deck.deckId})}" method="post"
+                    onsubmit="return confirm('Ngừng chia sẻ deck này? Sau khi ngừng, deck sẽ chuyển về riêng tư.')">
+                    <button type="submit"
+                        class="btn-action w-full bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 shadow-sm italic">
+                        ⛔ Ngừng chia sẻ
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+
+            <section
+                class="lg:col-span-1 bg-white p-8 md:p-10 rounded-[3rem] shadow-sm border border-gray-50 lg:sticky lg:top-28">
+                <!-- Form nhập liệu bổ sung thẻ ghi nhớ mới -->
+                <h3 class="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                    <span class="w-2 h-8 bg-blue-600 rounded-full"></span>
+                    Thêm thẻ mới
+                </h3>
+
+                <form id="flashcardForm" class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 ml-1">Mặt trước *</label>
+                        <input type="text" id="frontContent" name="frontContent" placeholder="Từ vựng / Câu hỏi"
+                            class="form-input-main" required />
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 ml-1">Mặt sau *</label>
+                        <input type="text" id="backContent" name="backContent" placeholder="Ý nghĩa / Đáp án"
+                            class="form-input-main" required />
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 ml-1">Phát âm</label>
+                        <input type="text" id="pronunciation" name="pronunciation" placeholder="/kəmˈpeər/"
+                            class="form-input-main" />
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-bold text-gray-700 ml-1">Ví dụ minh họa</label>
+                        <textarea id="exampleSentence" name="exampleSentence" rows="3"
+                            placeholder="Viết một câu ví dụ..." class="form-input-main py-4 resize-none"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="imageUrl" name="imageUrl" placeholder="https://image..."
+                            class="form-input-sub" />
+                        <input type="text" id="audioUrl" name="audioUrl" placeholder="https://audio..."
+                            class="form-input-sub" />
+                    </div>
+
+                    <button type="button" onclick="submitFlashcard()"
+                        class="w-full bg-gray-900 hover:bg-black text-white font-black py-5 px-6 rounded-2xl shadow-xl transition-all active:scale-[0.98] mt-4 uppercase tracking-widest text-sm">
+                        + Thêm ngay
+                    </button>
+                </form>
+
+                <div class="mt-8 pt-8 border-t border-gray-100">
+                    <h4 class="text-lg font-bold text-gray-800 mb-2">⚡ Nhập hàng loạt bằng File</h4>
+                    <p class="text-[11px] text-gray-400 mb-4 leading-relaxed font-medium">
+                        Hỗ trợ file <code class="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">.csv</code> hoặc <code class="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">.txt</code> định dạng: <br>
+                        <span class="italic font-bold text-gray-500">Mặt trước,Mặt sau,Phát âm,Ví dụ</span>
+                    </p>
+                    
+                    <div class="mb-4">
+                        <input type="file" id="csvFile" accept=".csv, .txt" 
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 p-2 rounded-2xl bg-gray-50" />
+                    </div>
+                    
+                    <button type="button" onclick="uploadCSVFile()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl transition-all active:scale-[0.98] uppercase tracking-widest text-xs shadow-md">
+                        📤 Tải lên và xử lý
+                    </button>
+                </div>
+            </section>
+
+            <section
+                class="lg:col-span-2 bg-white rounded-[3rem] shadow-sm border border-gray-50 overflow-hidden min-h-[600px]">
+                <!-- Danh sách các thẻ ghi nhớ hiện có trong bộ thẻ -->
+                <div class="p-10 border-b border-gray-50">
+                    <h3 class="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                        <span class="w-2 h-8 bg-indigo-600 rounded-full"></span>
+                        Flashcards hiện có
+                    </h3>
+                </div>
+
+                <div th:if="${#lists.isEmpty(flashcards)}" class="py-32 text-center">
+                    <p class="text-gray-300 text-lg italic font-medium">Chưa có thẻ nào trong bộ này.</p>
+                    <p class="text-gray-400 text-sm mt-2">Hãy bắt đầu thêm thẻ đầu tiên ở bên trái!</p>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(flashcards)}" class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50/50">
+                            <tr>
+                                <th
+                                    class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest w-16 text-center">
+                                    #</th>
+                                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Nội
+                                    dung thẻ</th>
+                                <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    Giải nghĩa & Ví dụ</th>
+                                <th
+                                    class="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <tr th:each="card, iterStat : ${flashcards}"
+                                class="hover:bg-blue-50/30 transition-all group">
+                                <td class="px-8 py-6 text-sm font-black text-gray-200 group-hover:text-blue-200 text-center"
+                                    th:text="${iterStat.index + 1}">1</td>
+                                <td class="px-8 py-6 flex items-center gap-4">
+                                    <img th:if="${card.imageUrl != null and !card.imageUrl.isEmpty()}" 
+                                         th:src="${card.imageUrl}" 
+                                         alt="Ảnh" 
+                                         class="w-12 h-12 object-cover rounded shadow-sm border border-gray-200">
+                                         
+                                    <div th:unless="${card.imageUrl != null and !card.imageUrl.isEmpty()}" 
+                                         class="w-12 h-12 bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-gray-300 text-[10px]">
+                                         No img
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-gray-900 text-lg" th:text="${card.frontContent}">Front
+                                            Content</div>
+                                        <div class="text-xs text-blue-500 font-bold mt-1 tracking-wide"
+                                            th:text="${card.pronunciation}">/pronun/</div>
+                                    </div>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <div class="text-base text-gray-700 font-semibold" th:text="${card.backContent}">
+                                        Back Content</div>
+                                    <div class="text-xs text-gray-400 italic mt-2 leading-relaxed"
+                                        th:text="${card.exampleSentence}">Example sentence goes here...</div>
+                                </td>
+                                <td class="px-8 py-6 text-right space-x-4">
+                                    <a th:href="@{/decks/{deckId}/flashcards/{cardId}/edit(deckId=${deck.deckId}, cardId=${card.flashcardId})}"
+                                        class="text-xs font-bold text-gray-400 hover:text-blue-600 transition uppercase tracking-widest"
+                                        th:classappend="${deck.status.name() == 'PENDING'} ? 'pointer-events-none opacity-20' : ''">
+                                        Sửa
+                                    </a>
+                                    <form
+                                        th:action="@{/decks/{deckId}/flashcards/{cardId}/delete(deckId=${deck.deckId}, cardId=${card.flashcardId})}"
+                                        method="post" class="inline" onsubmit="return confirm('Xóa thẻ này?')">
+                                        <button type="submit" th:disabled="${deck.status.name() == 'PENDING'}"
+                                            class="text-xs font-bold text-gray-400 hover:text-red-600 transition uppercase tracking-widest disabled:opacity-20">
+                                            Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        // ==========================================
+        // 1. HÀM THÊM 1 THẺ
+        // ==========================================
+        function submitFlashcard() {
+           const deckId = /*[[${deck.deckId}]]*/ 0;
+
+            const formData = {
+                frontContent: document.getElementById('frontContent').value,
+                backContent: document.getElementById('backContent').value,
+                pronunciation: document.getElementById('pronunciation').value,
+                exampleSentence: document.getElementById('exampleSentence').value,
+                imageUrl: document.getElementById('imageUrl').value,
+                audioUrl: document.getElementById('audioUrl').value
+            };
+
+            if (!formData.frontContent || !formData.backContent) {
+                alert("Vui lòng nhập đầy đủ mặt trước và mặt sau!");
+                return;
+            }
+
+            fetch(`/decks/${deckId}/flashcards/api-add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('flashcardForm').reset();
+                        location.reload(); 
+                    } else {
+                        alert("Có lỗi xảy ra khi thêm thẻ!");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Lỗi kết nối!");
+                });
+        }
+
+        // ==========================================
+        // 2. HÀM THÊM HÀNG LOẠT BẰNG FILE CSV/TXT
+        // ==========================================
+        async function uploadCSVFile() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            const deckId = /*[[${deck.deckId}]]*/ 0;
+
+            if (!file) {
+                alert("Vui lòng chọn một file .csv hoặc .txt trước khi tải lên!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`/decks/${deckId}/flashcards/upload-csv`, {
+                    method: 'POST',
+                    body: formData // Không cần set header Content-Type, trình duyệt tự xử lý
+                });
+
+                if (response.ok) {
+                    const result = await response.text();
+                    alert("Thành công: " + result);
+                    location.reload(); 
+                } else {
+                    const errorText = await response.text();
+                    alert("Lỗi xử lý file: " + errorText);
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Lỗi kết nối tới Server!");
+            }
+        }
+    </script>
+</body>
+
+</html>

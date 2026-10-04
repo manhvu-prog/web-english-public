@@ -1,0 +1,105 @@
+<!-- Trang Quản trị: Quản lý danh sách người dùng, phân quyền và xóa tài khoản -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý tài khoản | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .input-field {
+            @apply w-full md:w-96 px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all outline-none shadow-sm;
+            border-width: 1px;
+        }
+
+        .table-card {
+            @apply bg-white rounded-[2rem] shadow-[0_15px_40px_rgba(0, 0, 0, 0.05)] border border-gray-100 overflow-hidden;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-900">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-12">
+        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-2">
+                <h1 class="text-4xl font-extrabold tracking-tight text-gray-900">Quản lý tài khoản</h1>
+                <p class="text-gray-400 italic">Admin và super admin có thể xem, sửa vai trò và xóa tài khoản.</p>
+            </div>
+            <form th:action="@{/admin/users}" method="get" class="flex items-center gap-3">
+                <input type="text" name="q" placeholder="Tìm username..." th:value="${query}" class="input-field" />
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.95]">Tìm</button>
+                <a th:if="${query != null}" th:href="@{/admin/users}"
+                    class="text-xs font-bold text-gray-400 hover:text-red-500 transition ml-3">XÓA BỘ LỌC</a>
+            </form>
+        </header>
+
+        <div th:if="${success}"
+            class="mb-6 p-4 bg-green-50 text-green-700 rounded-2xl border border-green-100 text-center font-bold"
+            th:text="${success}"></div>
+        <div th:if="${error}"
+            class="mb-6 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 text-center font-bold"
+            th:text="${error}"></div>
+
+        <div class="table-card">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-500">Username
+                            </th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-500">Email</th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-500">Vai trò
+                            </th>
+                            <th class="px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-gray-500">Hành động
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(users)}" class="border-t border-gray-100">
+                            <td colspan="4" class="px-6 py-16 text-center text-gray-400 italic">Không tìm thấy tài khoản
+                                nào.</td>
+                        </tr>
+                        <tr th:each="user : ${users}"
+                            class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-5 font-semibold text-gray-900" th:text="${user.username}"></td>
+                            <td class="px-6 py-5 text-gray-500" th:text="${user.email}"></td>
+                            <td class="px-6 py-5">
+                                <form th:action="@{/admin/users/{id}/role(id=${user.userId})}" method="post"
+                                    class="flex items-center gap-3">
+                                    <select name="role"
+                                        class="input-field w-full max-w-[180px] border-gray-200 bg-white text-sm">
+                                        <option value="user" th:selected="${user.role.name() == 'user'}">user</option>
+                                        <option value="admin" th:selected="${user.role.name() == 'admin'}">admin
+                                        </option>
+                                        <option value="super_admin" th:selected="${user.role.name() == 'super_admin'}">
+                                            super_admin</option>
+                                    </select>
+                                    <button type="submit"
+                                        class="px-4 py-2 bg-slate-900 text-white rounded-2xl text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition">Lưu</button>
+                                </form>
+                            </td>
+                            <td class="px-6 py-5">
+                                <form th:action="@{/admin/users/{id}/delete(id=${user.userId})}" method="post"
+                                    onsubmit="return confirm('Xóa tài khoản này?');">
+                                    <button type="submit"
+                                        class="px-4 py-2 bg-red-600 text-white rounded-2xl text-xs font-bold uppercase tracking-wider hover:bg-red-700 transition">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

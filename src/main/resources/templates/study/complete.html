@@ -1,0 +1,62 @@
+<!-- Trang Thông báo hoàn thành session học -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hoàn thành!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-gray-50 text-gray-900 antialiased">
+
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+
+        <div
+            class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 p-10 md:p-14 text-center transform transition-all hover:-translate-y-2 hover:shadow-2xl">
+
+            <div class="text-6xl mb-6">🎉</div>
+            <h2 class="text-2xl font-extrabold text-gray-900 mb-4 tracking-tight">Bạn đã hoàn thành session học hôm nay!
+            </h2>
+
+            <p class="text-gray-500 mb-2">Không còn thẻ nào cần ôn tập lúc này.</p>
+            <p class="text-gray-400 text-sm italic mb-10">Hãy quay lại sau khi các thẻ đến hạn ôn tập.</p>
+
+            <div class="flex flex-col gap-4">
+                <a th:href="@{/decks/{id}(id=${deckId})}"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-95 uppercase tracking-wider text-sm">
+                    Quản lý Deck
+                </a>
+
+                <!-- Nút ôn tập lại toàn bộ -->
+                <form th:action="@{/study/{id}/reset-all(id=${deckId})}" method="post"
+                    onsubmit="return confirm('Bạn muốn ôn tập lại toàn bộ deck ngay bây giờ?\nThao tác này sẽ đưa tất cả thẻ về hàng ôn tập ngay lập tức.')">
+                    <button type="submit"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-95 uppercase tracking-wider text-sm">
+                        Ôn tập lại toàn bộ
+                    </button>
+                </form>
+
+                <a th:href="@{/}"
+                    class="w-full bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold py-4 px-8 rounded-2xl transition-all active:scale-95 uppercase tracking-wider text-sm">
+                    Về Trang Chủ
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

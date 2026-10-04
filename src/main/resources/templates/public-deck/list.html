@@ -1,0 +1,390 @@
+<!-- Trang Khám phá Bộ thẻ Cộng đồng (Community Decks) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Khám phá Deck | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .search-input {
+            @apply w-full md:w-96 px-5 py-3 rounded-2xl border border-gray-200 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all outline-none shadow-sm;
+            border-width: 1px;
+        }
+
+        .deck-card {
+            @apply bg-white p-6 rounded-[2rem] shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-gray-50 hover:shadow-[0_20px_40px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between;
+        }
+
+        .deck-card-vip {
+            background: linear-gradient(135deg, #fffbeb, #fefce8);
+            border: 1.5px solid rgba(251, 191, 36, 0.4);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.08), 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .deck-card-vip:hover {
+            box-shadow: 0 20px 50px rgba(251, 191, 36, 0.18), 0 8px 20px rgba(0,0,0,0.06);
+            transform: translateY(-4px);
+        }
+
+        .vip-badge-pill {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #1a0533;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            letter-spacing: 0.08em;
+        }
+
+        .hot-badge {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 2px 9px;
+            border-radius: 9999px;
+            letter-spacing: 0.06em;
+            animation: pulse-hot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-hot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+            50% { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        }
+
+        .sort-btn {
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1.5px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .sort-btn-active {
+            background: #1e293b;
+            color: white;
+            border-color: #1e293b;
+        }
+        .sort-btn-inactive {
+            background: white;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+        .sort-btn-inactive:hover {
+            border-color: #94a3b8;
+            color: #1e293b;
+        }
+
+        .trending-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .trending-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+            transform: translateY(-2px);
+            border-color: #e2e8f0;
+        }
+        .rank-num {
+            font-size: 22px;
+            font-weight: 900;
+            min-width: 36px;
+            text-align: center;
+            line-height: 1;
+        }
+        .rank-1 { color: #f59e0b; }
+        .rank-2 { color: #94a3b8; }
+        .rank-3 { color: #b45309; }
+
+        .view-pill {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<span id="__isLoggedIn" th:attr="data-logged=${username != null}" style="display:none"></span>
+
+<body class="min-h-screen flex flex-col text-gray-900">
+
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-12">
+
+        <!-- Header + Search -->
+        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div class="space-y-2 text-center md:text-left">
+                <h1 class="text-4xl font-extrabold tracking-tight text-gray-900">Khám phá thư viện</h1>
+                <p class="text-gray-400 italic">Tìm kiếm và học hỏi từ những bộ thẻ được chia sẻ bởi cộng đồng.</p>
+            </div>
+
+            <!-- Form tìm kiếm bộ thẻ công khai -->
+
+            <form th:action="@{/public-decks}" method="get" class="flex items-center gap-2">
+                <input type="hidden" name="sort" th:value="${sort}" />
+                <div class="relative">
+                    <input type="text" name="q" placeholder="Tìm tiêu đề, mô tả..." th:value="${query}"
+                        class="search-input" />
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.95]">
+                    Tìm
+                </button>
+                <a th:href="@{/public-decks}" th:if="${query != null}"
+                    class="text-xs font-bold text-gray-400 hover:text-red-500 transition ml-2">XÓA BỘ LỌC</a>
+            </form>
+        </header>
+
+        <!-- Flash messages -->
+        <div th:if="${success}"
+            class="mb-8 p-4 bg-green-50 text-green-700 rounded-2xl border border-green-100 text-center font-bold"
+            th:text="${success}"></div>
+        <div th:if="${error}"
+            class="mb-8 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 text-center font-bold"
+            th:text="${error}"></div>
+
+        <!-- Trending Section (chỉ hiển thị khi không search và có deck trending) -->
+        <section th:if="${trendingDecks != null and !#lists.isEmpty(trendingDecks) and query == null}" class="mb-10">
+            <div class="flex items-center gap-3 mb-5">
+                <span class="text-2xl">🔥</span>
+                <h2 class="text-lg font-black text-gray-900 uppercase tracking-widest">Trending — Xem nhiều nhất</h2>
+                <span class="flex-1 h-px bg-gray-100"></span>
+            </div>
+            <!-- Danh sách các bộ thẻ đang xu hướng (Trending) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <th:block th:each="td, iterStat : ${trendingDecks}">
+                    <!-- VIP deck không cho xem nếu chưa VIP -->
+                    <a th:if="${td.vipOnly and !isVip}" th:href="@{/vip}" class="trending-card group">
+                        <div th:class="${'rank-num rank-' + iterStat.count}" th:text="${iterStat.count}">1</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="font-bold text-sm text-gray-900 truncate" th:text="${td.title}">Title</span>
+                                <span class="vip-badge-pill shrink-0">👑 VIP</span>
+                            </div>
+                            <p class="text-xs text-gray-400 truncate" th:text="${td.description != null ? td.description : ''}"></p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <span class="view-pill" th:text="${td.viewCount} + ' lượt'">0 lượt</span>
+                            <span class="text-[10px] text-gray-300" th:text="${td.totalCards} + ' thẻ'"></span>
+                        </div>
+                    </a>
+                    <a th:unless="${td.vipOnly and !isVip}" th:href="@{/public-decks/{id}(id=${td.deckId})}" class="trending-card group">
+                        <div th:class="${'rank-num rank-' + iterStat.count}" th:text="${iterStat.count}">1</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="font-bold text-sm text-gray-900 truncate group-hover:text-blue-600 transition" th:text="${td.title}">Title</span>
+                                <span th:if="${td.vipOnly}" class="vip-badge-pill shrink-0">👑 VIP</span>
+                            </div>
+                            <p class="text-xs text-gray-400 truncate" th:text="${td.description != null ? td.description : ''}"></p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <span class="view-pill" th:text="${td.viewCount} + ' lượt'">0 lượt</span>
+                            <span class="text-[10px] text-gray-300" th:text="${td.totalCards} + ' thẻ'"></span>
+                        </div>
+                    </a>
+                </th:block>
+            </div>
+        </section>
+
+        <!-- Sort + Count Bar -->
+        <div th:if="${query == null}" class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <span class="text-sm text-gray-400 font-medium">
+                <span class="font-black text-gray-700" th:text="${publicDeckCount}">0</span> bộ thẻ
+            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-medium mr-1">Sắp xếp:</span>
+                <a th:href="@{/public-decks(sort='views')}"
+                    th:class="${sort == 'views' or sort == null} ? 'sort-btn sort-btn-active' : 'sort-btn sort-btn-inactive'">
+                    🔥 Xem nhiều nhất
+                </a>
+                <a th:href="@{/public-decks(sort='newest')}"
+                    th:class="${sort == 'newest'} ? 'sort-btn sort-btn-active' : 'sort-btn sort-btn-inactive'">
+                    ✨ Mới nhất
+                </a>
+            </div>
+        </div>
+
+        <!-- Search result label -->
+        <div th:if="${query != null}" class="mb-8 px-2 flex items-center gap-2">
+            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase italic">Kết quả
+                cho:</span>
+            <strong class="text-gray-900" th:text="${query}"></strong>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(publicDecks)}"
+            class="py-32 text-center bg-white rounded-[3rem] border border-dashed border-gray-200">
+            <p class="text-gray-300 text-xl font-medium italic">Không tìm thấy bộ thẻ nào phù hợp.</p>
+            <a th:href="@{/public-decks}" class="text-blue-600 font-bold mt-4 inline-block hover:underline">Quay lại
+                danh sách đầy đủ</a>
+        </div>
+
+        <!-- Deck Grid -->
+        <!-- Danh sách các bộ thẻ dưới dạng lưới (Grid) -->
+        <div th:unless="${#lists.isEmpty(publicDecks)}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div th:each="d, iterStat : ${publicDecks}"
+                th:class="${d.vipOnly} ? 'deck-card-vip group' : 'deck-card group'">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span
+                                class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-black rounded-full uppercase tracking-widest"
+                                th:text="${d.totalCards} + ' thẻ'">0 thẻ</span>
+                            <span th:if="${d.vipOnly}" class="vip-badge-pill">&#x1F451; VIP</span>
+                            <!-- Badge HOT cho top 5 xem nhiều khi sort by views -->
+                            <span th:if="${(sort == 'views' or sort == null) and iterStat.index < 5 and d.viewCount > 0}"
+                                class="hot-badge">🔥 HOT</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Lượt xem -->
+                            <span th:if="${d.viewCount > 0}" class="view-pill" th:text="${d.viewCount} + ' lượt'"></span>
+                            <div class="flex gap-1"
+                                th:if="${role != null and (role.toLowerCase() == 'admin' or role.toLowerCase() == 'super_admin')}">
+                                <form th:action="@{/public-decks/{id}/hide(id=${d.deckId})}" method="post"
+                                    onsubmit="return confirm('Ẩn deck này?');">
+                                    <button type="submit" class="p-2 text-red-300 hover:text-red-600 transition">Ẩn</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-extrabold group-hover:transition-colors"
+                        th:class="${d.vipOnly} ? 'text-2xl font-extrabold text-amber-900 group-hover:text-amber-600 transition-colors' : 'text-2xl font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors'">
+                        <a th:if="${d.vipOnly and !isVip}" th:href="@{/vip}" th:text="${d.title}">Tên bộ thẻ</a>
+                        <a th:unless="${d.vipOnly and !isVip}" th:href="@{/public-decks/{id}(id=${d.deckId})}" th:text="${d.title}">Tên bộ thẻ</a>
+                    </h3>
+
+                    <p class="text-sm italic line-clamp-3 leading-relaxed"
+                        th:class="${d.vipOnly} ? 'text-amber-800/60 text-sm italic line-clamp-3 leading-relaxed' : 'text-gray-500 text-sm italic line-clamp-3 leading-relaxed'"
+                        th:text="${d.description != null ? d.description : 'Bộ thẻ này chưa có mô tả chi tiết...'}">Mô
+                        tả</p>
+                </div>
+
+                <div class="mt-8 pt-6 flex items-center justify-between gap-4"
+                    th:class="${d.vipOnly} ? 'mt-8 pt-6 border-t border-yellow-200/60 flex items-center justify-between gap-4' : 'mt-8 pt-6 border-t border-gray-50 flex items-center justify-between gap-4'">
+
+                    <!-- Chi tiết -->
+                    <a th:if="${d.vipOnly and !isVip}" th:href="@{/vip}"
+                        class="text-xs font-black text-amber-600 hover:text-amber-800 uppercase tracking-widest transition">
+                        &#x1F451; Xem VIP
+                    </a>
+                    <a th:unless="${d.vipOnly and !isVip}" th:href="@{/public-decks/{id}(id=${d.deckId})}"
+                        class="text-xs font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest transition">
+                        Chi tiết
+                    </a>
+
+                    <!-- Import button -->
+                    <div th:if="${d.vipOnly and !isVip}">
+                        <a th:href="@{/vip}"
+                            class="px-5 py-2.5 text-xs font-black rounded-xl uppercase tracking-widest transition-all"
+                            style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a0533;">
+                            &#x1F451; Mở khóa VIP
+                        </a>
+                    </div>
+                    <div th:unless="${d.vipOnly and !isVip}">
+                        <form th:action="@{/public-decks/{id}/import(id=${d.deckId})}" method="post"
+                            onsubmit="return confirm('Import deck này về tài khoản của bạn?');">
+                            <button type="submit"
+                                class="px-5 py-2.5 bg-gray-900 text-white text-xs font-black rounded-xl hover:bg-blue-600 transition-all uppercase tracking-widest">
+                                Import
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal đăng nhập -->
+    <div id="loginRequiredModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:2rem; padding:2.5rem 2rem; max-width:360px; width:90%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.15); animation:modalIn 0.25s ease;">
+            <div style="font-size:2.5rem; margin-bottom:1rem;">🔒</div>
+            <h2 style="font-size:1.25rem; font-weight:800; color:#1e293b; margin-bottom:0.5rem;">Yêu cầu đăng nhập</h2>
+            <p style="color:#64748b; font-size:0.9rem; margin-bottom:1.75rem;">Vui lòng đăng nhập để tiếp tục thực hiện thao tác này.</p>
+            <div style="display:flex; gap:0.75rem; justify-content:center;">
+                <button onclick="closeLoginModal()" style="padding:0.65rem 1.5rem; border-radius:9999px; border:1.5px solid #e2e8f0; font-weight:700; font-size:0.85rem; color:#64748b; cursor:pointer; background:white; transition:all 0.2s;">Hủy</button>
+                <button id="modalLoginBtn" onclick="goToLogin()" style="padding:0.65rem 1.75rem; border-radius:9999px; background:#2563eb; color:white; font-weight:800; font-size:0.85rem; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); transition:all 0.2s;">Đăng nhập ngay</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.97); } to { opacity:1; transform:none; } }
+    </style>
+
+    <script>
+        (function () {
+            var isLoggedIn = document.getElementById('__isLoggedIn').dataset.logged === 'true';
+            var pendingUrl = null;
+
+            function showLoginModal(redirectUrl) {
+                if (isLoggedIn) return false;
+                pendingUrl = redirectUrl || window.location.pathname;
+                var modal = document.getElementById('loginRequiredModal');
+                modal.style.display = 'flex';
+                return true;
+            }
+
+            window.closeLoginModal = function () {
+                document.getElementById('loginRequiredModal').style.display = 'none';
+                pendingUrl = null;
+            };
+
+            window.goToLogin = function () {
+                window.location.href = '/login?redirect=' + encodeURIComponent(pendingUrl || '/public-decks');
+            };
+
+            // Đóng modal khi click nền
+            document.getElementById('loginRequiredModal').addEventListener('click', function (e) {
+                if (e.target === this) closeLoginModal();
+            });
+
+            if (!isLoggedIn) {
+                // Intercept nút Import (form submit)
+                document.querySelectorAll('form[action*="/import"]').forEach(function (form) {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        var deckId = form.action.match(/\/public-decks\/(\d+)\/import/);
+                        var redirectUrl = deckId ? '/public-decks/' + deckId[1] : '/public-decks';
+                        showLoginModal(redirectUrl);
+                    });
+                });
+
+                // Intercept link Chi tiết và trending deck links
+                document.querySelectorAll('a[href*="/public-decks/"]').forEach(function (link) {
+                    // chỉ intercept link đến detail page
+                    if (/\/public-decks\/\d+$/.test(link.getAttribute('href'))) {
+                        link.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            showLoginModal(link.getAttribute('href'));
+                        });
+                    }
+                });
+            }
+        })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnkarD - Bảng điều khiển (Dashboard)</title>
+    <!-- Tailwind CSS và Chart.js để hiển thị giao diện và biểu đồ thống kê -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .nav-link {
+            @apply text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors uppercase tracking-widest;
+        }
+
+        .deck-card {
+            @apply bg-white p-8 rounded-[2.5rem] shadow-[0_10px_40px_rgba(0, 0, 0, 0.03)] border border-gray-50 hover:shadow-[0_20px_50px_rgba(0, 0, 0, 0.06)] hover:-translate-y-1 transition-all duration-300;
+        }
+
+        .stat-box {
+            @apply flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- Nhúng Header từ file fragments/header.html -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-12">
+
+        <header class="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
+            <div class="space-y-2">
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Thư viện của tôi</h1>
+                <p class="text-gray-400 italic">Hôm nay bạn muốn học thêm điều gì mới?</p>
+            </div>
+            <a th:href="@{/decks/new}"
+                class="w-full md:w-auto bg-gray-900 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:bg-black transition-all active:scale-[0.98] text-center">
+                + TẠO BỘ THẺ MỚI
+            </a>
+        </header>
+
+        <!-- Hiển thị các thông báo từ hệ thống (Flash Attributes) -->
+        <div th:if="${success}"
+            class="mb-8 p-5 bg-green-50 text-green-700 rounded-3xl border border-green-100 text-center font-bold shadow-sm"
+            th:text="${success}"></div>
+        <div th:if="${error}"
+            class="mb-8 p-5 bg-red-50 text-red-700 rounded-3xl border border-red-100 text-center font-bold shadow-sm"
+            th:text="${error}"></div>
+
+        <!-- ===== THỐNG KÊ CÁ NHÂN ===== -->
+        <!-- Danh sách các bộ thẻ của người dùng -->
+        <section class="mb-12">
+            <div class="flex items-center gap-2 mb-5">
+                <span class="text-xl">📊</span>
+                <h2 class="text-sm font-black text-gray-500 uppercase tracking-widest">Thống kê của bạn</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <!-- Lượt ôn hôm nay -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition text-center">
+                    <div class="text-3xl mb-1">📅</div>
+                    <div class="text-3xl font-black text-blue-600" th:text="${todayReviews}">0</div>
+                    <div class="text-xs text-gray-400 font-medium mt-1">Lượt ôn hôm nay</div>
+                </div>
+                <!-- Tổng thẻ đã học -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition text-center">
+                    <div class="text-3xl mb-1">🃏</div>
+                    <div class="text-3xl font-black text-indigo-600" th:text="${learnedCards}">0</div>
+                    <div class="text-xs text-gray-400 font-medium mt-1">Thẻ đã tiếp cận</div>
+                </div>
+                <!-- Thẻ đã thành thạo -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition text-center">
+                    <div class="text-3xl mb-1">⭐</div>
+                    <div class="text-3xl font-black text-green-600" th:text="${masteredCards}">0</div>
+                    <div class="text-xs text-gray-400 font-medium mt-1">Thẻ thành thạo</div>
+                </div>
+                <!-- Tỉ lệ đúng -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition text-center">
+                    <div class="text-3xl mb-1">🎯</div>
+                    <div class="text-3xl font-black text-orange-500" th:text="${accuracyPct} + '%'">0%</div>
+                    <div class="text-xs text-gray-400 font-medium mt-1">Tỉ lệ đúng</div>
+                </div>
+            </div>
+
+            <!-- Biểu đồ 7 ngày + Accuracy bar -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Biểu đồ ôn tập 7 ngày -->
+                <div class="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-black text-gray-700">Lịch sử ôn tập — 7 ngày qua</h3>
+                        <span class="text-xs text-gray-400" th:text="'Tổng: ' + ${totalReviews} + ' lượt'"></span>
+                    </div>
+                    <canvas id="reviewChart" height="120"></canvas>
+                </div>
+                <!-- Tóm tắt đúng / sai -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-center gap-5">
+                    <h3 class="text-sm font-black text-gray-700 mb-2">Kết quả trả lời</h3>
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>✅ Đúng</span>
+                            <span class="font-black text-green-600" th:text="${correctAnswers}">0</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-400 rounded-full"
+                                th:style="'width:' + ${accuracyPct} + '%'"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>❌ Sai</span>
+                            <span class="font-black text-red-400" th:text="${wrongAnswers}">0</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-red-300 rounded-full"
+                                th:style="'width:' + (${totalReviews} > 0 ? (${wrongAnswers} * 100 / ${totalReviews}) : 0) + '%'"></div>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-4 border-t border-gray-50">
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-400">Deck đã tạo</span>
+                            <span class="text-sm font-black text-gray-700" th:text="${myDecks}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div th:if="${#lists.isEmpty(decks)}"
+            class="py-32 text-center bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
+            <div class="text-6xl mb-6">📚</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Chưa có bộ thẻ nào</h2>
+            <p class="text-gray-400 mb-8 italic">Hãy bắt đầu bằng cách tạo một bộ thẻ đầu tiên của bạn.</p>
+            <a th:href="@{/decks/new}"
+                class="inline-block bg-blue-600 text-white font-black py-4 px-10 rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition">TẠO
+                NGAY</a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(decks)}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div th:each="deck : ${decks}" class="deck-card flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <span
+                            class="px-3 py-1 bg-gray-50 text-gray-400 text-[10px] font-black rounded-full uppercase tracking-widest"
+                            th:text="${deck.status}">PRIVATE</span>
+                        <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest"
+                            th:text="'Tổng: ' + ${deck.totalCards}">TOTAL: 0</span>
+                    </div>
+
+                    <h3 class="text-2xl font-extrabold text-gray-900 mb-2 truncate">
+                        <a th:href="@{/decks/{id}(id=${deck.deckId})}" th:text="${deck.title}"
+                            class="hover:text-blue-600 transition">Tên deck</a>
+                    </h3>
+                    <p class="text-gray-400 text-sm italic line-clamp-2 mb-8"
+                        th:text="${deck.description != null ? deck.description : 'Không có mô tả...'}">Mô tả</p>
+
+                    <div class="grid grid-cols-3 gap-3 mb-8">
+                        <div class="stat-box">
+                            <span class="text-lg font-black text-blue-600" th:text="${deck.newCards}">0</span>
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">Mới</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="text-lg font-black text-red-500" th:text="${deck.learningCards}">0</span>
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">Đang học</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="text-lg font-black text-green-500" th:text="${deck.reviewCards}">0</span>
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">Ôn tập</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <div th:if="${deck.newCards + deck.learningCards + deck.reviewCards > 0}" class="flex-grow">
+                        <a th:href="@{/study/{id}(id=${deck.deckId})}">
+                            <button
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-100 transition-all active:scale-[0.95] text-sm italic uppercase tracking-wider">Học
+                                ngay</button>
+                        </a>
+                    </div>
+                    <div th:unless="${deck.newCards + deck.learningCards + deck.reviewCards > 0}" class="flex-grow">
+                        <button disabled
+                            class="w-full bg-gray-200 text-gray-400 font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm italic uppercase tracking-wider">
+                            Học ngay
+                        </button>
+                    </div>
+
+                    <a th:href="@{/decks/{id}(id=${deck.deckId})}" class="flex-none">
+                        <button
+                            class="p-3 bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-900 rounded-xl transition"
+                            title="Quản lý bộ thẻ">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const chartLabels = /*[[${chartLabels}]]*/ [];
+        const chartData   = /*[[${chartData}]]*/ [];
+
+        const ctx = document.getElementById('reviewChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Lượt ôn',
+                        data: chartData,
+                        backgroundColor: 'rgba(99,102,241,0.15)',
+                        borderColor: 'rgba(99,102,241,0.8)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ctx.parsed.y + ' lượt ôn'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#94a3b8', font: { size: 11 } },
+                            grid: { color: 'rgba(0,0,0,0.04)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8', font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+
+</body>
+</html>

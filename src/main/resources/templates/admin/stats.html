@@ -1,0 +1,223 @@
+<!-- Trang Quản trị: Thống kê chi tiết về người dùng, bộ thẻ và hoạt động hệ thống -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Thống kê hệ thống | AnkarD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .stat-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid #f1f5f9;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+        .stat-icon {
+            width: 52px; height: 52px;
+            border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="max-w-7xl mx-auto px-4 py-10">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6 flex items-center gap-2 text-sm text-gray-400">
+        <a href="/admin/decks/pending" class="hover:text-indigo-600 transition">Admin</a>
+        <span>/</span>
+        <span class="font-semibold text-gray-700">Thống kê hệ thống</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center gap-3">
+                <span class="text-4xl">📊</span> Thống kê hệ thống
+            </h1>
+            <p class="text-gray-400 text-sm mt-1">Tổng quan về hoạt động của nền tảng AnkarD.</p>
+        </div>
+        <span class="text-xs text-gray-400 font-medium">Cập nhật theo thời gian thực</span>
+    </div>
+
+    <!-- ===== SECTION 1: NGƯỜI DÙNG ===== -->
+    <section class="mb-10">
+        <h2 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <span>👥</span> Người dùng
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-50 mb-4">👥</div>
+                <div class="text-3xl font-black text-gray-900" th:text="${totalUsers}">0</div>
+                <div class="text-sm text-gray-400 font-medium mt-1">Tổng người dùng</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon bg-green-50 mb-4">🙂</div>
+                <div class="text-3xl font-black text-green-600" th:text="${regularUsers}">0</div>
+                <div class="text-sm text-gray-400 font-medium mt-1">User thường</div>
+                <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-green-400 rounded-full transition-all"
+                        th:style="'width:' + (${totalUsers} > 0 ? (${regularUsers} * 100 / ${totalUsers}) : 0) + '%'"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon bg-yellow-50 mb-4">👑</div>
+                <div class="text-3xl font-black text-yellow-600" th:text="${vipUsers}">0</div>
+                <div class="text-sm text-gray-400 font-medium mt-1">Thành viên VIP</div>
+                <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-yellow-400 rounded-full"
+                        th:style="'width:' + (${totalUsers} > 0 ? (${vipUsers} * 100 / ${totalUsers}) : 0) + '%'"></div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon bg-red-50 mb-4">🛡️</div>
+                <div class="text-3xl font-black text-red-500" th:text="${adminUsers}">0</div>
+                <div class="text-sm text-gray-400 font-medium mt-1">Quản trị viên</div>
+                <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-red-400 rounded-full"
+                        th:style="'width:' + (${totalUsers} > 0 ? (${adminUsers} * 100 / ${totalUsers}) : 0) + '%'"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 2: DECK & NỘI DUNG ===== -->
+    <section class="mb-10">
+        <h2 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <span>🗂️</span> Deck & Nội dung
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">🗂️</div>
+                <div class="text-2xl font-black text-gray-900" th:text="${totalDecks}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">Tổng deck</div>
+            </div>
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">✅</div>
+                <div class="text-2xl font-black text-indigo-600" th:text="${approvedDecks}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">Đã duyệt</div>
+            </div>
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">👑</div>
+                <div class="text-2xl font-black text-yellow-600" th:text="${vipDecks}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">VIP Only</div>
+            </div>
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">⏳</div>
+                <div class="text-2xl font-black text-orange-500" th:text="${pendingDecks}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">Chờ duyệt</div>
+            </div>
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">🔒</div>
+                <div class="text-2xl font-black text-gray-500" th:text="${privateDecks}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">Riêng tư</div>
+            </div>
+            <div class="stat-card text-center">
+                <div class="text-2xl mb-1">🃏</div>
+                <div class="text-2xl font-black text-purple-600" th:text="${totalFlashcards}">0</div>
+                <div class="text-xs text-gray-400 mt-1 font-medium">Tổng thẻ</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 3: HOẠT ĐỘNG ===== -->
+    <section class="mb-10">
+        <h2 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <span>⚡</span> Hoạt động
+        </h2>
+        <!-- Thống kê về lượt xem và ôn tập -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <div class="stat-card flex items-center gap-5">
+                <div class="stat-icon bg-orange-50 shrink-0">🔥</div>
+                <div>
+                    <div class="text-3xl font-black text-gray-900" th:text="${totalViews}">0</div>
+                    <div class="text-sm text-gray-400 font-medium">Tổng lượt xem deck</div>
+                </div>
+            </div>
+
+            <div class="stat-card flex items-center gap-5">
+                <div class="stat-icon bg-blue-50 shrink-0">📖</div>
+                <div>
+                    <div class="text-3xl font-black text-gray-900" th:text="${totalReviews}">0</div>
+                    <div class="text-sm text-gray-400 font-medium">Tổng lượt ôn tập</div>
+                </div>
+            </div>
+
+            <div class="stat-card flex items-center gap-5">
+                <div class="stat-icon bg-green-50 shrink-0">📅</div>
+                <div>
+                    <div class="text-3xl font-black text-gray-900" th:text="${recentActivity}">0</div>
+                    <div class="text-sm text-gray-400 font-medium">Lượt ôn trong 7 ngày</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 4: TOP DECK ===== -->
+    <section th:if="${topDecks != null and !#lists.isEmpty(topDecks)}">
+        <h2 class="text-sm font-black text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <span>🏆</span> Top deck xem nhiều nhất
+        </h2>
+        <div class="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-50">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">#</th>
+                        <th class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Deck</th>
+                        <th class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Tác giả</th>
+                        <th class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                        <th class="px-6 py-3 text-right text-xs font-black text-gray-500 uppercase tracking-wider">Lượt xem</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <tr th:each="deck, iterStat : ${topDecks}" class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-2xl font-black"
+                                th:text="${iterStat.index == 0} ? '🥇' : (${iterStat.index == 1} ? '🥈' : (${iterStat.index == 2} ? '🥉' : (${iterStat.index + 1})))">1</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a th:href="@{/public-decks/{id}(id=${deck.deckId})}"
+                               class="font-bold text-gray-900 hover:text-indigo-600 transition"
+                               th:text="${deck.title}">Title</a>
+                            <p class="text-xs text-gray-400 mt-0.5 truncate max-w-xs"
+                               th:text="${deck.description != null ? deck.description : ''}"></p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                            th:text="${deck.createdBy != null ? deck.createdBy.username : '—'}"></td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span th:if="${deck.status.name() == 'VIP_ONLY'}"
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black"
+                                style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1a0533;">👑 VIP</span>
+                            <span th:unless="${deck.status.name() == 'VIP_ONLY'}"
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">Công khai</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <span class="inline-flex items-center gap-1 text-sm font-black text-orange-500">
+                                🔥 <span th:text="${deck.viewCount}">0</span>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+</body>
+</html>
